@@ -16,81 +16,66 @@ const transporter = nodemailer.createTransport({
   }
 })
 
-const fetchPadlet = function (url, details) {
-  return request('https://padlet.com/padlets/' + url + '/exports/list.csv')
-    .then(function (data) {
-      data = parse(data)
-      var updatedBoxes = []
-      var latestUpdated = 0;
-      for (var i=1; i<data.length; i++) {
-        let updated = new Date(data[i][5])
-        if (updated > new Date(details.lastUpdated)) {
-          if (updated > latestUpdated) latestUpdated = updated;
-          updatedBoxes.push(data[i][0])
-        }
-      }
-      if (updatedBoxes.length > 0) {
-        db.push("/urls/" + url + "/lastUpdated", latestUpdated);
-        return {
-          url: url,
-          emails: details.emails,
-          boxes: updatedBoxes
-        }
-      }
-      return null
-    })
-    .catch(function (err) {
-      console.log('[ERR] Can\'t fetch padlet ' + url)
-      console.log(err)
-    })
+const fetchPadlet = async function (padlet) {
+  var data = await request('https://padlet.com/padlets/' + padlet.url + '/exports/list.csv')
+
+  data = parse(data)
+  var updatedBoxes = []
+  var latestUpdated = 0;
+  for (var i=1; i<data.length; i++) {
+    let updated = new Date(data[i][5])
+    if (updated > new Date(padlet.updated)) {
+      if (updated > latestUpdated) latestUpdated = updated;
+      updatedBoxes.push(data[i][0])
+    }
+  }
+  if (updatedBoxes.length > 0) {
+    await db.query('UPDATE padlets SET updated = $1 WHERE id = $2', [latestUpdated, padlet.id])
+    return updatedBoxes
+  }
+  return null
 }
 
-module.exports = function () {
-  var urls = db.getData("/urls")
+module.exports = async function () {
+  const padlets = (await db.query('SELECT * FROM padlets')).rows
 
   var stats = {
-    urls: { total: 0, updated: 0 },
+    padlets: { total: 0, updated: 0 },
     boxes: 0,
     emails: 0
   }
 
-  var promiseArray = [];
-  for (var url in urls) {
-    promiseArray.push(fetchPadlet(url, urls[url]))
-    stats.urls.total++
+  for (var padlet of padlets) {
+    var updated = await fetchPadlet(padlet)
+    stats.padlets.total++
+    if (updated) {
+      stats.padlets.updated++
+      const emails = (await db.query('SELECT * FROM emails WHERE padlet = $1', [padlet.id])).rows
+      for (var email of emails) {
+        var html = '<h2>Seuraamasi padletti on päivittynyt!</h2><h3>Seuraaviin laatikoihin on tullut muutoksia:</h3><ul>'
+        for (var box of updated) {
+          stats.boxes++
+          html += '<li>' + box + '</li>'
+        }
+        html += '</ul><h3>Pääset katsomaan muutoksia alla olevasta linkistä:</h3><a href="https://padlet.com/embed/' + padlet.url + '">https://padlet.com/embed/' + padlet.url + '</a>'
+        console.log(html)
+        transporter.sendMail(
+          {
+            from: process.env.EMAIL_FROM,
+            to: email.email,
+            subject: 'Seuraamasi padletti on päivittynyt',
+            html: html
+          }, (error, info) => {
+            if (error) {
+              console.log('[ERROR] Can\'t send email: ' + error)
+            }
+            console.log('[DEBUG] Message %s sent: %s', info.messageId, info.response)
+          }
+        )
+        stats.emails++
+      }
+    }
   }
 
-  return Promise.all(promiseArray)
-    .then(function (results) {
-      for (var result of results) {
-        if (result) {
-          stats.urls.updated++
-          for (var email of result.emails) {
-
-            var html = '<h2>Seuraamasi padletti on päivittynyt!</h2><h3>Seuraaviin laatikoihin on tullut muutoksia:</h3><ul>'
-            for (var box of result.boxes) {
-              stats.boxes++
-              html += '<li>' + box + '</li>'
-            }
-            html += '</ul><h3>Pääset katsomaan muutoksia alla olevasta linkistä:</h3><a href="https://padlet.com/embed/' + result.url + '">https://padlet.com/embed/' + result.url + '</a>'
-            console.log(html)
-            transporter.sendMail(
-              {
-                from: process.env.EMAIL_FROM,
-                to: email,
-                subject: 'Seuraamasi padletti on päivittynyt',
-                html: html
-              }, (error, info) => {
-                if (error) {
-                  console.log('[ERROR] Can\'t send email: ' + error)
-                }
-                console.log('[DEBUG] Message %s sent: %s', info.messageId, info.response)
-              }
-            )
-            stats.emails++
-          }
-        }
-      }
-      return stats
-    })
+  return stats
 }

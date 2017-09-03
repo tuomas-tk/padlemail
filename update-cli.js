@@ -3,8 +3,8 @@ console.log('> STARTED update')
 update()
   .then((stats) => {
     console.log('Update successful')
-    console.log(' Total padlets:    ' + stats.urls.total);
-    console.log(' Updated padlets:  ' + stats.urls.updated);
+    console.log(' Total padlets:    ' + stats.padlets.total);
+    console.log(' Updated padlets:  ' + stats.padlets.updated);
     console.log(' Updated boxes:    ' + stats.boxes);
     console.log(' Sent emails:      ' + stats.emails);
   })

@@ -31,12 +31,40 @@ app.get('/add/:url/:email', function (req, res) {
   console.log(req.params.url)
   console.log(req.params.email)
 
-  db.push("/urls/" + req.params.url + "/emails[]", req.params.email);
-  db.push("/urls/" + req.params.url + "/lastUpdated", new Date())
-
-  res.send('OK')
+  db.query('SELECT id FROM padlets WHERE url = $1', [req.params.url])
+    .then((searchResult) => {
+      if (searchResult.rowCount == 0) { // no padlet in db
+        return db.query('INSERT INTO padlets(url) VALUES ($1) RETURNING id', [req.params.url])
+          .then((insertResult) => {
+            if (insertResult.rowCount == 1) {
+              return insertResult.rows[0].id
+            } else {
+              return Promise.reject('ERROR: rowCount = ' + insertResult.rowCount)
+            }
+          })
+      }
+      return searchResult.rows[0].id
+    })
+    .then((padletID) => {
+      db.query('INSERT INTO emails(padlet, email) VALUES ($1, $2)', [padletID, req.params.email])
+        .then((insertResult) => {
+          if (insertResult.rowCount == 1) {
+            return true
+          } else {
+            return Promise.reject('ERROR: rowCount = ' + insertResult.rowCount)
+          }
+        })
+    })
+    .then(() => {
+      res.send('OK')
+    })
+    .catch((err) => {
+      res.status(500).json({
+        error: err
+      })
+    })
 })
 
-app.listen(3000, function () {
-  console.log('Padlemail listening on port 3000!')
+app.listen(process.env.PORT || 3000, function () {
+  console.log('Padlemail listening on port ' + (process.env.PORT || 3000) + '!')
 })
