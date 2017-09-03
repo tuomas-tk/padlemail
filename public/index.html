@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Padlemail</title>
+  <style>
+    body {
+      background-color: #222222;
+      color: #D0D0D0;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    .content, .footer {
+      width: 95%;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    h1 {
+      background-color: #000000;
+      margin: 0;
+      padding: 1em;
+    }
+    h2 {
+      text-align: center;
+      font-size: 2em;
+      padding: 2em 0;
+      line-height: 1.5em;
+    }
+    @media (min-width: 500px) {
+      .lead {
+        display: inline-block;
+        width: 40%;
+        vertical-align: top;
+      }
+      .form {
+        display: inline-block;
+        width: 50%;
+        padding-left: 10%;
+        vertical-align: top;
+      }
+    }
+    @media (max-width: 500px) {
+      h2 {
+        font-size: 1.5em;
+      }
+      .lead {
+        margin-bottom: 2em;
+        font-size: 1em;
+      }
+    }
+    .lead {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.5em;
+    }
+    #thankyou {
+      display: none;
+      border: 1px solid #D0D0D0;
+      padding: 1em;
+      margin-bottom: 1em;
+      border-radius: 3px;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .form {
+      text-align: center;
+    }
+    input {
+      display: block;
+      width: 90%;
+      padding: 0.5em;
+      margin: 0.5em auto;
+      font-size: 1.2em;
+    }
+    .footer {
+      color: #666666;
+      margin-top: 2em;
+      border-top: 1px solid #666666;
+      padding-top: 2em;
+    }
+    .footer > a {
+      color: #888888;
+    }
+    .footer > a:hover {
+      color: #ffffff;
+    }
+
+  </style>
+  <script>
+    function checkThankYou() {
+      console.log(window.location.href.indexOf('thankyou'));
+      if (window.location.href.indexOf('thankyou') != -1) {
+        document.getElementById('thankyou').style.display = 'block';
+      }
+    }
+  </script>
+</head>
+<body onload="checkThankYou()">
+  <h1>Padlemail</h1>
+  <div class="content">
+    <h2>
+      Seuraatko jatkuvasti samoja Padletteja muutosten varalta?<br>
+      Nyt siihen on ratkaisu!
+    </h2>
+    <div class="lead">
+      Tämän ilmaisen palvelun avulla saat sähköposti-ilmoituksen aina, kun tiettyyn padlettiin tulee muutoksia.
+    </div><div class="form">
+      <div id="thankyou">
+        Ilmoitukset tilattu, kiitos paljon!
+      </div>
+      <form method="get" action="/add">
+        <input type="text" name="url" placeholder="Padletin osoite" value="wgg39o483xg" />
+        <input type="email" name="email" placeholder="Sähköpostiosoite" />
+        <input type="submit" value="Tilaa ilmoitukset" />
+      </form>
+    </div>
+  </div>
+  <div class="footer">
+    Padlemail löytyy <a href="https://github.com/tuomas-tk/padlemail">Githubista!</a>
+  </div>
+  <div class="footer">
+    Sähköpostiosoitettasi ei luovuteta ulkopuolisille, tai käytetä markkinointiin.<br>
+    Tämä palvelu ei ole <a href="https://padlet.com">Padlet.com</a>:in ylläpitämä.<br>
+    Tämän palvelun ylläpito ei ole vastuussa palvelun aiheuttamista välittömistä tai välillisistä vahingoista.
+  </div>
+</body>
+</html>
