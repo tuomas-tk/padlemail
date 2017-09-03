@@ -1,4 +1,5 @@
-const update = require('./update.js')
+#!/usr/bin/env node
+const update = require('../update.js')
 console.log('> STARTED update')
 update()
   .then((stats) => {
