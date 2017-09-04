@@ -1,1 +1,2 @@
-web: npm start
+web:     npm start
+updater: npm run update
